@@ -1,0 +1,9 @@
+rabbitmq:
+  host: brocker
+  port: 5672
+  username: user
+  password: password
+
+observer:
+  watched_folder: /tmp
+  buf_size: 1024*4
