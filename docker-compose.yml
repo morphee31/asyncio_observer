@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  observer:
+    build:
+      context: ./observer
+    volumes:
+      - /tmp:/data/in
+    networks:
+      - asyncio_project
+    depends_on:
+      - broker
+
+  broker:
+    image: rabbitmq:3-management
+    ports:
+      - 15672:15672
+      - 5672:5672
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+
+networks:
+  asyncio_project:
+
+volumes:
+  rabbitmq_data:
