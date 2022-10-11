@@ -3,7 +3,10 @@ rabbitmq:
   port: 5672
   username: user
   password: password
+  exchange: asyncio_observer
+#  exchange_type: direct
+  routing_key: observer
 
 observer:
-  watched_folder: /tmp
-  buf_size: 1024*4
+  watched_folder: /data/in
+  buf_size: 1024
