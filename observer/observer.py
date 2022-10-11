@@ -9,6 +9,8 @@ import confuse
 import hashlib
 import aiofiles
 
+from rabbitmq import Rabbitmq
+
 CONFIG = None
 
 async def hash_file(file_path:pathlib.Path):
@@ -16,7 +18,7 @@ async def hash_file(file_path:pathlib.Path):
 
     async with aiofiles.open(str(file_path), mode="r") as fb:
         while True:
-            data = fb.read(CONFIG["observer"]["buf_size"])
+            data = await fb.read(CONFIG["observer"]["buf_size"])
             if not data:
                 break
             md5.update(data)
@@ -30,6 +32,8 @@ async def extract_event_data(event: asyncinotify.Event):
     }
 
 async def main():
+
+    rabbitmq = Rabbitmq(config=CONFIG)
     # Context manager to close the inotify handle after use
     with Inotify() as inotify:
         # Adding the watch can also be done outside of the context manager.
@@ -49,12 +53,22 @@ async def main():
                 hash_file(event.path)
             )
             logger.info(f"message {message}")
+            logger.info(f"result {results}")
+            event_data = results[0]
+            message = {
+                "md5_hash": results[1],
+                "file_path": Path(event_data["file_path"], event_data["filename"])
+            }
+
+            rabbitmq.publish_message(message)
+            logger.info(f"Publish message : {message}")
+
             # the contained path may or may not be valid UTF-8.  See the note
             # below
 
 if __name__ == '__main__':
     config = confuse.Configuration("observer", __name__)
-    config.set_file("observer/config.yaml")
+    config.set_file("config.yaml")
     CONFIG = config.get()
     try:
         logger.info("Start observer")

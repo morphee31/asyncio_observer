@@ -12,6 +12,12 @@ class Rabbitmq:
         self._port = self._config["port"]
         self._connection : aiormq.Connection = None
         self._channel: aiormq.Channel = None
+        self._run()
+
+    async def _run(self):
+        await self._create_connection()
+        await self._set_channel()
+        await self._declare_exchange()
 
     async def _create_connection(self):
         self._connection = aiormq.connect(f"amqp://{self._username}:{self._password}@{self._host}:{self._port}")
@@ -19,8 +25,17 @@ class Rabbitmq:
     async def _set_channel(self):
         self._channel = await self._connection.channel()
 
-    async def declare_exchange(self):
-        self._channel.exchange_declare(exchange=self._config)
+    async def _declare_exchange(self):
+        await self._channel.exchange_declare(
+            exchange=self._config["exchange"],
+            exchange_type=self._config.get("exchange_type", "direct")
+        )
+    async def publish_message(self, message):
+        await self._channel.basic_publish(
+            body=message,
+            exchange=self._config["exchange"],
+            routing_key=self._config['routing_key']
+        )
 
 async def main():
     # Perform connection
