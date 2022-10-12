@@ -33,7 +33,6 @@ async def extract_event_data(event: asyncinotify.Event):
 
 async def main():
 
-    rabbitmq = Rabbitmq(config=CONFIG)
     # Context manager to close the inotify handle after use
     with Inotify() as inotify:
         # Adding the watch can also be done outside of the context manager.
@@ -44,6 +43,7 @@ async def main():
         # inotify.add_watch('/tmp', Mask.ACCESS | Mask.MODIFY | Mask.OPEN | Mask.CREATE | Mask.DELETE | Mask.ATTRIB | Mask.CLOSE | Mask.MOVE | Mask.ONLYDIR)
         # Iterate events forever, yielding them one at a time
         async for event in inotify:
+            _rabbitmq = await Rabbitmq(config=CONFIG).run()
             message = []
             # Events have a helpful __repr__.  They also have a reference to
             # their Watch instance.
@@ -60,7 +60,7 @@ async def main():
                 "file_path": Path(event_data["file_path"], event_data["filename"])
             }
 
-            rabbitmq.publish_message(message)
+            await _rabbitmq.publish_message(message)
             logger.info(f"Publish message : {message}")
 
             # the contained path may or may not be valid UTF-8.  See the note
@@ -68,10 +68,11 @@ async def main():
 
 if __name__ == '__main__':
     config = confuse.Configuration("observer", __name__)
-    config.set_file("config.yaml")
+    #config.set_file("observer/config.yaml")
+    config.set_file("/app/config.yaml")
     CONFIG = config.get()
     try:
         logger.info("Start observer")
-        asyncio.run(main())
+        asyncio.run(main(), debug=True)
     except KeyboardInterrupt:
         logger.info('shutting down')

@@ -9,7 +9,8 @@ services:
     networks:
       - asyncio_project
     depends_on:
-      - broker
+      broker:
+        condition: service_healthy
 
   broker:
     image: rabbitmq:3-management
@@ -18,10 +19,17 @@ services:
       - 5672:5672
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-    hostname: broker
     environment:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: password
+    hostname: broker
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - asyncio_project
 
 networks:
   asyncio_project:
