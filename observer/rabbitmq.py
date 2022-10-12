@@ -1,26 +1,26 @@
-import sys
 import asyncio
+
 import aiormq
+
 
 class Rabbitmq:
 
-    def __init__(self, config:dict):
+    def __init__(self, config: dict):
         self._config = config["rabbitmq"]
         self._username = self._config["username"]
         self._password = self._config["password"]
         self._host = self._config["host"]
         self._port = self._config["port"]
-        self._connection : aiormq.Connection = None
+        self._connection: aiormq.Connection = None
         self._channel: aiormq.Channel = None
-        self._run()
 
-    async def _run(self):
+    async def run(self):
         await self._create_connection()
         await self._set_channel()
         await self._declare_exchange()
 
     async def _create_connection(self):
-        self._connection = aiormq.connect(f"amqp://{self._username}:{self._password}@{self._host}:{self._port}")
+        self._connection = await aiormq.connect(f"amqp://{self._username}:{self._password}@{self._host}:{self._port}/")
 
     async def _set_channel(self):
         self._channel = await self._connection.channel()
@@ -30,6 +30,7 @@ class Rabbitmq:
             exchange=self._config["exchange"],
             exchange_type=self._config.get("exchange_type", "direct")
         )
+
     async def publish_message(self, message):
         await self._channel.basic_publish(
             body=message,
@@ -37,6 +38,30 @@ class Rabbitmq:
             routing_key=self._config['routing_key']
         )
 
+
+async def main():
+    config = {
+        "rabbitmq": {
+            "host": "brocker",
+            "port": 5672,
+            "username": "user",
+            "password": "password",
+            "exchange": "asyncio_observer",
+            "routing_key": "observer"
+        },
+        "observer": {
+            "watched_folder": "/data/in",
+            "buf_size": 1024
+        }
+    }
+    await Rabbitmq(config=config).run()
+
+
+
+if __name__ == '__main__':
+    asyncio.run(main(), debug=True)
+
+"""
 async def main():
     # Perform connection
     connection = await aiormq.connect("amqp://guest:guest@localhost/")
@@ -61,4 +86,4 @@ async def main():
 
 
 loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
+loop.run_until_complete(main())"""

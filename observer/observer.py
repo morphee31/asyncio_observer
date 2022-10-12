@@ -33,7 +33,7 @@ async def extract_event_data(event: asyncinotify.Event):
 
 async def main():
 
-    rabbitmq = Rabbitmq(config=CONFIG)
+    rabbitmq = await Rabbitmq(config=CONFIG).run()
     # Context manager to close the inotify handle after use
     with Inotify() as inotify:
         # Adding the watch can also be done outside of the context manager.
@@ -68,7 +68,7 @@ async def main():
 
 if __name__ == '__main__':
     config = confuse.Configuration("observer", __name__)
-    config.set_file("config.yaml")
+    config.set_file("/app/config.yaml")
     CONFIG = config.get()
     try:
         logger.info("Start observer")
