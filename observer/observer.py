@@ -68,7 +68,6 @@ async def main():
 
 if __name__ == '__main__':
     config = confuse.Configuration("observer", __name__)
-    #config.set_file("observer/config.yaml")
     config.set_file("/app/config.yaml")
     CONFIG = config.get()
     try:

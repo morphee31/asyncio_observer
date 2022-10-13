@@ -31,6 +31,7 @@ class Rabbitmq:
         )
 
     async def _create_connection(self):
+        self._connection = await aiormq.connect(f"amqp://{self._username}:{self._password}@{self._host}:{self._port}/")
         try:
             self._rabbitmq_connection = await aiormq.connect(f"amqp://{self._username}:{self._password}@{self._host}:{self._port}/")
         except Exception as e:
