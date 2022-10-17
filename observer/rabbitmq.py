@@ -15,20 +15,12 @@ class Rabbitmq:
         self._port = self._config["port"]
         self._rabbitmq_connection: aiormq.Connection = None
         self._rabbitmq_channel: aiormq.Channel = None
+        self._declared_queue: None
 
     async def run(self):
         await self._create_connection()
         await self._set_channel()
-        await self._declare_exchange()
-
-    async def start_client(self):
-        self._rabbitmq_connection = await aiormq.connect(
-            f"amqp://{self._username}:{self._password}@{self._host}:{self._port}/")
-        self._rabbitmq_channel = await self._rabbitmq_connection.channel()
-        await self._rabbitmq_channel.exchange_declare(
-            exchange=self._config["exchange"],
-            exchange_type=self._config.get("exchange_type", "direct")
-        )
+        await self._prepare_queue()
 
     async def _create_connection(self):
         self._connection = await aiormq.connect(f"amqp://{self._username}:{self._password}@{self._host}:{self._port}/")
@@ -42,16 +34,27 @@ class Rabbitmq:
 
     async def _declare_exchange(self):
         await self._rabbitmq_channel.exchange_declare(
-            exchange=self._config["exchange"],
+            exchange=self._config["exchange_name"],
             exchange_type=self._config.get("exchange_type", "direct")
         )
+
+    async def _prepare_queue(self):
+        self._declared_queue = await self._rabbitmq_channel.queue_declare(queue=self._config["queue_name"], durable=True)
+        await self._declare_exchange()
+        await self._rabbitmq_channel.queue_bind(
+            queue=self._config["queue_name"],
+            exchange=self._config["exchange_name"],
+            routing_key=self._config['routing_key']
+        )
+
 
     async def publish_message(self, message):
         await self._rabbitmq_channel.basic_publish(
             body=message,
-            exchange=self._config["exchange"],
+            exchange=self._config["exchange_name"],
             routing_key=self._config['routing_key']
         )
+        logger.info(f"publish {message} in {self._declared_queue.name}")
 
 
 async def main():

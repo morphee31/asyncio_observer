@@ -43,7 +43,8 @@ async def main():
         # inotify.add_watch('/tmp', Mask.ACCESS | Mask.MODIFY | Mask.OPEN | Mask.CREATE | Mask.DELETE | Mask.ATTRIB | Mask.CLOSE | Mask.MOVE | Mask.ONLYDIR)
         # Iterate events forever, yielding them one at a time
         async for event in inotify:
-            _rabbitmq = await Rabbitmq(config=CONFIG).run()
+            _rabbitmq = Rabbitmq(config=CONFIG)
+            await _rabbitmq.run()
             message = []
             # Events have a helpful __repr__.  They also have a reference to
             # their Watch instance.
