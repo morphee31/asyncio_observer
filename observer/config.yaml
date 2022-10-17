@@ -3,7 +3,8 @@ rabbitmq:
   port: 5672
   username: user
   password: password
-  exchange: asyncio_observer
+  exchange_name: asyncio_observer
+  queue_name: processed_file
 #  exchange_type: direct
   routing_key: observer
 

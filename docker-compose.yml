@@ -5,7 +5,7 @@ services:
     build:
       context: ./observer
     volumes:
-      - /tmp/wyll:/data/in
+      - /tmp/wyll:/data/in:z
     networks:
       - asyncio_project
     depends_on:
